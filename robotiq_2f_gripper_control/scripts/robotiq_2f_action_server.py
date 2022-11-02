@@ -25,6 +25,7 @@ from robotiq_2f_gripper_control.robotiq_2f_gripper_driver import Robotiq2FingerG
 import actionlib
 from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryResult, FollowJointTrajectoryFeedback, FollowJointTrajectoryGoal
 from robotiq_2f_gripper_msgs.msg import CommandRobotiqGripperFeedback, CommandRobotiqGripperResult, CommandRobotiqGripperAction, CommandRobotiqGripperGoal
+import time
 
 GOAL_DETECTION_THRESHOLD = 0.05 # Max deviation from target goal to consider as goal "reached"
 
@@ -74,7 +75,7 @@ class CommandGripperActionServer(object):
       result = CommandRobotiqGripperResult()
 
       # Set timeout timer 
-      watchdog = rospy.Timer(rospy.Duration(5.0), self._execution_timeout, oneshot=True)
+      watchdog = rospy.Timer(rospy.Duration(10.0), self._execution_timeout, oneshot=True) # WARNING!
 
       # Wait until goal is achieved and provide feedback
       rate = rospy.Rate( rospy.get_param('~rate', 30) )
@@ -137,7 +138,7 @@ class CommandGripperActionServer(object):
 
       goal_command = CommandRobotiqGripperGoal()
       feedback.joint_names = goal.trajectory.joint_names      
-      watchdog = rospy.Timer(rospy.Duration(goal.trajectory.points[-1].time_from_start.to_sec() + 0.5), 
+      watchdog = rospy.Timer(rospy.Duration(goal.trajectory.points[-1].time_from_start.to_sec() + 10.0),  # WARNING!
                               self._execution_timeout, 
                               oneshot=True)
 
@@ -168,18 +169,21 @@ class CommandGripperActionServer(object):
 
         feedback.error.positions = [error]
         self._joint_trajectory_action_server.publish_feedback( feedback )
-        
+        time.sleep(0.001)	# TODO: Temporal solution! It is necessary to add and time.sleep for ensure the feedback publish.
+
+        # print(error, " < ", GOAL_DETECTION_THRESHOLD)
         # Check for errors
-        if current_status.fault_status != 0 and not self._is_stalled:              
+        if ((current_status.fault_status != 0) and (not self._is_stalled)):              
           self._is_stalled = True
           self._processing_goal = False 
+          msg = "Fault status"
           rospy.logerr(msg)
           result.error_code = -6
-          result.error_string = "Gripper fault status (gFLT): " + current_status.fault_status
+          result.error_string = "Gripper fault status (gFLT): " + str(current_status.fault_status)
           self._joint_trajectory_action_server.set_aborted(result)
           return
         # Check if object was detected
-        if current_status.obj_detected:     
+        if (current_status.obj_detected):     
           watchdog.shutdown()                         # Stop timeout watchdog.
           self._processing_goal = False 
           self._is_stalled = False
@@ -188,7 +192,7 @@ class CommandGripperActionServer(object):
           self._joint_trajectory_action_server.set_succeeded(result)  
           return
         # Check if current trajectory point was reached 
-        if error < GOAL_DETECTION_THRESHOLD :      
+        if (error < GOAL_DETECTION_THRESHOLD):      
           break
         
       # Entire trajectory was followed/reached

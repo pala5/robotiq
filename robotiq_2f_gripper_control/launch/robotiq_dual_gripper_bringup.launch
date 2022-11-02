@@ -1,0 +1,32 @@
+<launch>
+    <!-- Common arguments -->
+    <arg name="sim"                     default="false"/>
+    <arg name="gripper_stroke"          default="0.140"/>    
+    <arg name="rate"                    default="50"/>   
+    <arg name="baud"                    default="115200"/>
+    <arg name="verbose"                 default="true"/>
+
+    <!-- Handed arguments -->
+    <arg name="right_gripper_comport"       default="/dev/ttyUSB1" unless="$(arg sim)"/>
+    <arg name="right_gripper_joint_name"    default="right_gripper_finger_joint" />
+    <arg name="left_gripper_comport"        default="/dev/ttyUSB0" unless="$(arg sim)"/>
+    <arg name="left_gripper_joint_name"     default="left_gripper_finger_joint" />
+	        
+     <!-- Launch action server for RIGHT gripper -->
+    <include ns="right_gripper" file="$(find robotiq_2f_gripper_control)/launch/robotiq_action_server.launch">
+        <arg name="comport"     value="$(arg right_gripper_comport)" unless="$(arg sim)"/>
+        <arg name="joint_name"  value="$(arg right_gripper_joint_name)"/>
+        <arg name="stroke"      value="$(arg gripper_stroke)"/>
+z
+     <!-- Launch action server for LEFT gripper -->
+    <include ns="left_gripper" file="$(find robotiq_2f_gripper_control)/launch/robotiq_action_server.launch">
+        <arg name="comport"     value="$(arg left_gripper_comport)" unless="$(arg sim)"/>
+        <arg name="joint_name"  value="$(arg left_gripper_joint_name)"/>
+        <arg name="stroke"      value="$(arg gripper_stroke)"/>
+        <arg name="verbose"     value="$(arg verbose)"/>
+        <arg name="sim"         value="$(arg sim)"/>
+        <arg name="rate"        value="$(arg rate)"/>
+        <arg name="baud"        value="$(arg baud)"/>  
+    </include>
+
+</launch>

@@ -15,10 +15,10 @@
     </include>
 
     <!-- Launch action client example  -->
-    <node pkg="robotiq_2f_gripper_control" type="robotiq_2f_action_client_example.py" 
+    <!-- <node pkg="robotiq_2f_gripper_control" type="robotiq_2f_action_client_example.py" 
         name="robotiq_140_client" output="screen">
         <param name="action_name" value="command_robotiq_action" />
-    </node>
+    </node> -->
 
     <param name="robot_description" command="$(find xacro)/xacro $(find robotiq_2f_140_gripper_visualization)/urdf/robotiq_arg2f_140_model.xacro" />  
 
